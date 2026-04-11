@@ -10,7 +10,7 @@ commands:
   igc:
     description: Main command for StopPlantGrowth.
     usage: /igc <reload|chunk|clear [radius]>
-    aliases: [stopplantgrowth, asmipacgrowthcontrol, ipacgrowthcontrol]
+    aliases: [stopplantgrowth]
 
 permissions:
 
