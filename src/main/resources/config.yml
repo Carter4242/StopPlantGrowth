@@ -21,5 +21,5 @@ shear-sound-plants:
   - CACTUS
 
 messages:
-  disable-growth: '§bIpacEL §f> §b已停止植物生长'
-  enable-growth: '§bIpacEL §f> §a已恢复植物生长'
+  disable-growth: "&cGrowth disabled for this plant."
+  enable-growth: "&aGrowth enabled for this plant."

@@ -1,25 +1,27 @@
-name: IpacGrowthControl
-version: '1.0-SNAPSHOT'
-main: io.github.aplini.IpacGrowthControl.IpacGrowthControl
+name: StopPlantGrowth
+version: '1.0.0'
+main: io.github.aplini.StopPlantGrowth.StopPlantGrowth
 api-version: '1.21'
 authors: [ ApliNi ]
 website: https://github.com/aplini/
+description: Toggle growth locking for vines and other vertical plants using shears.
 
 commands:
   igc:
-    description: IpacGrowthControl 插件的主命令
-    usage: /<command>
+    description: Main command for StopPlantGrowth.
+    usage: /igc <reload|chunk|clear [radius]>
+    aliases: [stopplantgrowth, asmipacgrowthcontrol, ipacgrowthcontrol]
 
 permissions:
 
-  IpacGrowthControl.reload:
-    description: '重载插件'
+  StopPlantGrowth.reload:
+    description: Reloads StopPlantGrowth configuration.
     default: op
 
-  IpacGrowthControl.chunk:
-    description: '查看当前区块停止生长的植物'
+  StopPlantGrowth.chunk:
+    description: Lists locked plants in the player's current chunk.
     default: op
 
-  IpacGrowthControl.clear:
-    description: '恢复当前区块停止生长的植物'
+  StopPlantGrowth.clear:
+    description: Clears locked plants around the player using a radius from 1 to 5.
     default: op

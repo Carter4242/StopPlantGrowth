@@ -1,4 +1,4 @@
-package io.github.aplini.IpacGrowthControl;
+package io.github.aplini.StopPlantGrowth;
 
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -23,22 +23,21 @@ import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.Damageable;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.jetbrains.annotations.NotNull;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.event.HoverEvent;
 
 import java.util.*;
 
-public final class IpacGrowthControl extends JavaPlugin implements Listener {
+public final class StopPlantGrowth extends JavaPlugin implements Listener {
 
     private static final byte LOCKED_FLAG = 1;
     private static final String KEY_PREFIX = "igc_";
-    private static final String DEFAULT_DISABLE_MESSAGE = "已禁用该植物的生长";
-    private static final String DEFAULT_ENABLE_MESSAGE = "已恢复该植物的生长";
+    private static final String DEFAULT_DISABLE_MESSAGE = "&cGrowth disabled for this plant.";
+    private static final String DEFAULT_ENABLE_MESSAGE = "&aGrowth enabled for this plant.";
+    private static final String PREFIX = "&7[&aStopPlantGrowth&7] ";
 
     private Set<Material> upwardGrowthPlants;
     private Set<Material> downwardGrowthPlants;
@@ -52,7 +51,6 @@ public final class IpacGrowthControl extends JavaPlugin implements Listener {
         reloadPlantMaterials();
         getServer().getPluginManager().registerEvents(this, this);
 
-        // 注册命令
         PluginCommand command = Objects.requireNonNull(getCommand("igc"));
         command.setExecutor(this);
         command.setTabCompleter(this);
@@ -85,13 +83,13 @@ public final class IpacGrowthControl extends JavaPlugin implements Listener {
 
         Player player = event.getPlayer();
         if (locked) {
-            player.sendMessage(enableMessage);
+            player.sendMessage(colorize(enableMessage));
         } else {
-            player.sendMessage(disableMessage);
+            player.sendMessage(colorize(disableMessage));
         }
 
         if (player.getGameMode() == GameMode.SURVIVAL || player.getGameMode() == GameMode.ADVENTURE) {
-            player.getInventory().setItemInMainHand(item.damage(1, player));
+            damageHeldShears(item, player);
         }
 
         if (shearSoundPlants.contains(clickedBlock.getType())) {
@@ -191,7 +189,7 @@ public final class IpacGrowthControl extends JavaPlugin implements Listener {
             try {
                 materials.add(Material.valueOf(value.toUpperCase(Locale.ROOT)));
             } catch (IllegalArgumentException exception) {
-                getLogger().warning(configKey + " 包含无效材料: " + value);
+                getLogger().warning("Invalid material in \"" + configKey + "\": " + value);
             }
         }
         return materials;
@@ -309,8 +307,8 @@ public final class IpacGrowthControl extends JavaPlugin implements Listener {
     }
 
 
-    @Override // 指令补全
-    public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
         if(args.length == 1){
             List<String> list = new ArrayList<>();
             addTabComplete(list, args[0], "reload");
@@ -318,78 +316,99 @@ public final class IpacGrowthControl extends JavaPlugin implements Listener {
             addTabComplete(list, args[0], "clear");
             return list;
         }
-        return null;
+        if (args.length == 2 && args[0].equalsIgnoreCase("clear")) {
+            List<String> list = new ArrayList<>();
+            addTabComplete(list, args[1], "1");
+            addTabComplete(list, args[1], "2");
+            addTabComplete(list, args[1], "3");
+            addTabComplete(list, args[1], "4");
+            addTabComplete(list, args[1], "5");
+            return list;
+        }
+        return Collections.emptyList();
     }
-    @Override // 执行指令
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args){
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args){
 
-        // 默认输出插件信息
         if(args.length == 0){
             sender.sendMessage(
                     "\n"+
-                            "IpacEL > IpacGrowthControl: 植物生长控制\n"+
-                            "  指令:\n"+
-                            "    - /pgc reload      - 重载配置\n"+
-                            "    - /pgc chunk       - 列出当前区块的禁用列表\n"+
-                            "    - /pgc clear       - 清除当前区块所有禁用配置\n"
+                            colorize(PREFIX + "&fCommands:\n")+
+                            colorize("  &7- &a/igc reload &8- &fReload config\n")+
+                            colorize("  &7- &a/igc chunk  &8- &fList locked plants in your chunk\n")+
+                            colorize("  &7- &a/igc clear [radius] &8- &fClear chunk locks (radius 1-5)\n")
             );
             return true;
         }
 
-        // 重载配置
-        else if(args[0].equals("reload")){
-            if(!sender.hasPermission("IpacGrowthControl.reload")){
-                sender.sendMessage("[IpacGrowthControl] 你没有权限使用此命令");
+        else if(args[0].equalsIgnoreCase("reload")){
+            if(!sender.hasPermission("StopPlantGrowth.reload")){
+                sender.sendMessage(colorize(PREFIX + "&cYou do not have permission."));
                 return true;
             }
 
             reloadPlantMaterials();
-            sender.sendMessage("[IpacGrowthControl] 已完成重载");
+            sender.sendMessage(colorize(PREFIX + "&aConfiguration reloaded."));
             return true;
         }
 
-        else if(args[0].equals("chunk")){
-            if(!sender.hasPermission("IpacGrowthControl.chunk")){
-                sender.sendMessage("[IpacGrowthControl] 你没有权限使用此命令");
+        else if(args[0].equalsIgnoreCase("chunk")){
+            if(!sender.hasPermission("StopPlantGrowth.chunk")){
+                sender.sendMessage(colorize(PREFIX + "&cYou do not have permission."));
                 return true;
             }
 
             if(!(sender instanceof Player player)){
-                sender.sendMessage("[IpacGrowthControl] 该命令只能由玩家执行");
+                sender.sendMessage(colorize(PREFIX + "&cOnly players can use this command."));
                 return true;
             }
 
-            List<LockedPlantEntry> lockedPlants = getLockedPlantsInChunk(player.getChunk());
+            List<LockedPlantEntry> lockedPlants = getLockedPlantsInChunk(player.getLocation().getChunk());
             if(lockedPlants.isEmpty()){
-                sender.sendMessage("[IpacGrowthControl] 当前区块没有停止生长的植物");
+                sender.sendMessage(colorize(PREFIX + "&eNo locked plants found in this chunk."));
                 return true;
             }
 
-            sender.sendMessage("[IpacGrowthControl] 当前区块停止生长的植物:");
+            sender.sendMessage(colorize(PREFIX + "&aLocked plants in this chunk:"));
             for(LockedPlantEntry lockedPlant : lockedPlants){
                 player.sendMessage(createLockedPlantMessage(lockedPlant));
             }
             return true;
         }
 
-        else if(args[0].equals("clear")){
-            if(!sender.hasPermission("IpacGrowthControl.clear")){
-                sender.sendMessage("[IpacGrowthControl] 你没有权限使用此命令");
+        else if(args[0].equalsIgnoreCase("clear")){
+            if(!sender.hasPermission("StopPlantGrowth.clear")){
+                sender.sendMessage(colorize(PREFIX + "&cYou do not have permission."));
                 return true;
             }
 
             if(!(sender instanceof Player player)){
-                sender.sendMessage("[IpacGrowthControl] 该命令只能由玩家执行");
+                sender.sendMessage(colorize(PREFIX + "&cOnly players can use this command."));
                 return true;
             }
 
-            int removedCount = clearLockedPlantsInChunk(player.getChunk());
-            sender.sendMessage("[IpacGrowthControl] 已恢复当前区块 " + removedCount + " 个停止生长的植物");
+            int radius = 1;
+            if (args.length >= 2) {
+                try {
+                    radius = Integer.parseInt(args[1]);
+                } catch (NumberFormatException exception) {
+                    sender.sendMessage(colorize(PREFIX + "&cRadius must be a number from 1 to 5."));
+                    return true;
+                }
+            }
+
+            if (radius < 1 || radius > 5) {
+                sender.sendMessage(colorize(PREFIX + "&cRadius must be between 1 and 5."));
+                return true;
+            }
+
+            int removedCount = clearLockedPlantsInRadius(player.getLocation().getChunk(), radius);
+            sender.sendMessage(colorize(PREFIX + "&aRemoved &f" + removedCount + "&a lock(s) in radius &f" + radius + "&a."));
             return true;
         }
 
-        // 返回 false 时, 玩家将收到命令不存在的错误
-        return false;
+        sender.sendMessage(colorize(PREFIX + "&cUnknown subcommand. Use &f/igc"));
+        return true;
     }
 
     private void addTabComplete(List<String> list, String input, String value){
@@ -428,6 +447,22 @@ public final class IpacGrowthControl extends JavaPlugin implements Listener {
         return keysToRemove.size();
     }
 
+    private int clearLockedPlantsInRadius(Chunk centerChunk, int radius) {
+        int removed = 0;
+        int chunkRadius = radius - 1;
+        World world = centerChunk.getWorld();
+        int centerX = centerChunk.getX();
+        int centerZ = centerChunk.getZ();
+
+        for (int dx = -chunkRadius; dx <= chunkRadius; dx++) {
+            for (int dz = -chunkRadius; dz <= chunkRadius; dz++) {
+                Chunk chunk = world.getChunkAt(centerX + dx, centerZ + dz);
+                removed += clearLockedPlantsInChunk(chunk);
+            }
+        }
+        return removed;
+    }
+
     private boolean isLockKey(NamespacedKey key){
         return key.getNamespace().equals(getName().toLowerCase(Locale.ROOT)) && key.getKey().startsWith(KEY_PREFIX);
     }
@@ -454,14 +489,33 @@ public final class IpacGrowthControl extends JavaPlugin implements Listener {
         }
     }
 
-    private Component createLockedPlantMessage(LockedPlantEntry lockedPlant){
-        String command = "/tp " + lockedPlant.x() + " " + lockedPlant.y() + " " + lockedPlant.z();
-        return Component.text("  - [" + lockedPlant.x() + "/" + lockedPlant.y() + "/" + lockedPlant.z() + "] ")
-                .append(Component.translatable(lockedPlant.material()))
-                .clickEvent(ClickEvent.runCommand(command))
-                .hoverEvent(HoverEvent.showText(Component.text(command)));
+    private String createLockedPlantMessage(LockedPlantEntry lockedPlant){
+        String coords = lockedPlant.x() + "/" + lockedPlant.y() + "/" + lockedPlant.z();
+        return colorize("&7  - [&f" + coords + "&7] &f" + lockedPlant.material());
     }
 
     private record LockedPlantEntry(int x, int y, int z, Material material) {
+    }
+
+    private String colorize(String text) {
+        return ChatColor.translateAlternateColorCodes('&', text);
+    }
+
+    private void damageHeldShears(ItemStack shears, Player player) {
+        ItemMeta itemMeta = shears.getItemMeta();
+        if (!(itemMeta instanceof Damageable damageableMeta)) {
+            return;
+        }
+
+        int newDamage = damageableMeta.getDamage() + 1;
+        if (newDamage >= shears.getType().getMaxDurability()) {
+            player.getInventory().setItemInMainHand(null);
+            player.playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1.0f, 1.0f);
+            return;
+        }
+
+        damageableMeta.setDamage(newDamage);
+        shears.setItemMeta(itemMeta);
+        player.getInventory().setItemInMainHand(shears);
     }
 }
