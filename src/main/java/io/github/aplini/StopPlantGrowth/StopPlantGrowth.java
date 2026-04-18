@@ -26,8 +26,6 @@ import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.entity.TNTPrimed;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.Damageable;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -121,10 +119,6 @@ public final class StopPlantGrowth extends JavaPlugin implements Listener {
             player.sendMessage(formatPlayerMessage(enableMessage, plantName));
         } else {
             player.sendMessage(formatPlayerMessage(disableMessage, plantName));
-        }
-
-        if (player.getGameMode() == GameMode.SURVIVAL || player.getGameMode() == GameMode.ADVENTURE) {
-            damageHeldShears(item, player);
         }
 
         player.playSound(clickedBlock.getLocation(), Sound.ENTITY_SHEEP_SHEAR, 1.0f, 1.0f);
@@ -1125,21 +1119,4 @@ public final class StopPlantGrowth extends JavaPlugin implements Listener {
         return builder.toString();
     }
 
-    private void damageHeldShears(ItemStack shears, Player player) {
-        ItemMeta itemMeta = shears.getItemMeta();
-        if (!(itemMeta instanceof Damageable damageableMeta)) {
-            return;
-        }
-
-        int newDamage = damageableMeta.getDamage() + 1;
-        if (newDamage >= shears.getType().getMaxDurability()) {
-            player.getInventory().setItemInMainHand(null);
-            player.playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1.0f, 1.0f);
-            return;
-        }
-
-        damageableMeta.setDamage(newDamage);
-        shears.setItemMeta(itemMeta);
-        player.getInventory().setItemInMainHand(shears);
-    }
 }
