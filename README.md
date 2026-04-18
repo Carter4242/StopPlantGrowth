@@ -5,6 +5,7 @@ StopPlantGrowth lets players toggle growth locks on supported plants by right-cl
 ## Features
 
 - Toggle growth lock on supported plants with shears.
+- Configurable shears durability cost, including fractional chance-based wear.
 - Shear sound plays on every successful lock/unlock.
 - Supports vertical plants, age-based crops/plants, saplings, and mushrooms.
 - Blocks growth/spread/tree generation while locked (by plant group behavior).
@@ -64,6 +65,13 @@ StopPlantGrowth lets players toggle growth locks on supported plants by right-cl
 - `age-growth-plants`
 - `sapling-growth-plants`
 - `mushroom-growth-plants`
+- `shears-durability-cost`
+
+## Shears Durability Cost
+
+- `0`: no durability consumed
+- Between `0` and `1`: random chance to consume `1` durability (for example, `0.25` = 25%)
+- `1` or higher: consumes the integer part every use, then rolls the decimal part as an extra chance (for example, `1.75`)
 
 ## Radius Notes
 

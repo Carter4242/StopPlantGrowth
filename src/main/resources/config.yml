@@ -46,6 +46,13 @@ mushroom-growth-plants:
   - RED_MUSHROOM
   - BROWN_MUSHROOM
 
+# Shears durability cost for each lock/unlock action.
+# 0 = no durability consumed
+# 0.5 = 50% chance to consume 1 durability
+# 1 = always consume 1 durability
+# 1.75 = always consume 1 durability, plus 75% chance to consume 1 extra
+shears-durability-cost: 0.0
+
 messages:
   disable-growth: "&cLocked &f%plant% &cprotections."
   enable-growth: "&aUnlocked &f%plant% &aprotections."
