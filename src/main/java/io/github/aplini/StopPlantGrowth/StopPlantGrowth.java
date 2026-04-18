@@ -21,6 +21,7 @@ import org.bukkit.event.block.BlockSpreadEvent;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.entity.TNTPrimed;
 import org.bukkit.inventory.EquipmentSlot;
@@ -80,7 +81,12 @@ public final class StopPlantGrowth extends JavaPlugin implements Listener {
         command.setTabCompleter(this);
     }
 
-    @EventHandler
+    @Override
+    public void onDisable() {
+        breakRestrictionBypassPlayers.clear();
+    }
+
+    @EventHandler(ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent event) {
         if (event.getHand() != EquipmentSlot.HAND || event.getAction() != Action.RIGHT_CLICK_BLOCK) {
             return;
@@ -244,7 +250,7 @@ public final class StopPlantGrowth extends JavaPlugin implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onStructureGrow(StructureGrowEvent event) {
-        Material lockedSource = findLockedStructureSourceNear(event.getLocation());
+        Material lockedSource = findLockedStructureSourceNear(event.getLocation(), event.getSpecies());
         if (lockedSource == null) {
             return;
         }
@@ -726,6 +732,11 @@ public final class StopPlantGrowth extends JavaPlugin implements Listener {
         return true;
     }
 
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        breakRestrictionBypassPlayers.remove(event.getPlayer().getUniqueId());
+    }
+
     private void addTabComplete(List<String> list, String input, String value){
         if(value.toLowerCase(Locale.ROOT).startsWith(input.toLowerCase(Locale.ROOT))){
             list.add(value);
@@ -965,12 +976,13 @@ public final class StopPlantGrowth extends JavaPlugin implements Listener {
         return direction != null && hasLockedBlockInColumn(block, direction);
     }
 
-    private Material findLockedStructureSourceNear(Location origin) {
+    private Material findLockedStructureSourceNear(Location origin, TreeType species) {
         World world = origin.getWorld();
         if (world == null) {
             return null;
         }
 
+        boolean mangroveGrowth = species == TreeType.MANGROVE || species == TreeType.TALL_MANGROVE;
         int baseX = origin.getBlockX();
         int baseY = origin.getBlockY();
         int baseZ = origin.getBlockZ();
@@ -978,7 +990,11 @@ public final class StopPlantGrowth extends JavaPlugin implements Listener {
             for (int dz = -2; dz <= 2; dz++) {
                 for (int dy = -1; dy <= 1; dy++) {
                     Block block = world.getBlockAt(baseX + dx, baseY + dy, baseZ + dz);
-                    if ((isSaplingPlant(block.getType()) || isMushroomPlant(block.getType())) && hasLock(block)) {
+                    Material type = block.getType();
+                    boolean isStructureSource = isSaplingPlant(type)
+                            || isMushroomPlant(type)
+                            || (mangroveGrowth && type == Material.MANGROVE_PROPAGULE);
+                    if (isStructureSource && hasLock(block)) {
                         return block.getType();
                     }
                 }
