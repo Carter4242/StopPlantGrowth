@@ -7,9 +7,9 @@ website: https://github.com/aplini/
 description: Toggle growth locking for vines and other vertical plants using shears.
 
 commands:
-  igc:
+  spg:
     description: Main command for StopPlantGrowth.
-    usage: /igc <reload|chunk|clear [radius]>
+    usage: /spg <reload|chunk|stats [radius]|clear <chunks|blocks> [radius] [type]>
     aliases: [stopplantgrowth]
 
 permissions:
@@ -22,6 +22,14 @@ permissions:
     description: Lists locked plants in the player's current chunk.
     default: op
 
+  StopPlantGrowth.stats:
+    description: Shows lock statistics around the player with an optional radius from 1 to 9.
+    default: op
+
   StopPlantGrowth.clear:
-    description: Clears locked plants around the player using a radius from 1 to 5.
+    description: Clears locked plants by chunk or block radius with optional material type.
+    default: op
+
+  StopPlantGrowth.breakbypass:
+    description: Toggles session-only bypass for crop break protection.
     default: op

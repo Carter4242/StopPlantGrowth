@@ -7,6 +7,8 @@ upward-growth-plants:
   - TWISTING_VINES
   - TWISTING_VINES_PLANT
   - BAMBOO_SAPLING
+  - CHORUS_PLANT
+  - CHORUS_FLOWER
 
 downward-growth-plants:
   - VINE
@@ -14,12 +16,44 @@ downward-growth-plants:
   - WEEPING_VINES_PLANT
   - CAVE_VINES
   - CAVE_VINES_PLANT
-  - GLOW_BERRIES
 
-shear-sound-plants:
-  - SUGAR_CANE
-  - CACTUS
+age-growth-plants:
+  - WHEAT
+  - CARROTS
+  - POTATOES
+  - BEETROOTS
+  - NETHER_WART
+  - TORCHFLOWER_CROP
+  - PITCHER_CROP
+  - COCOA
+  - SWEET_BERRY_BUSH
+  - PUMPKIN_STEM
+  - MELON_STEM
+  - MANGROVE_PROPAGULE
+
+sapling-growth-plants:
+  - OAK_SAPLING
+  - SPRUCE_SAPLING
+  - BIRCH_SAPLING
+  - JUNGLE_SAPLING
+  - ACACIA_SAPLING
+  - DARK_OAK_SAPLING
+  - CHERRY_SAPLING
+  - AZALEA
+  - FLOWERING_AZALEA
+
+mushroom-growth-plants:
+  - RED_MUSHROOM
+  - BROWN_MUSHROOM
 
 messages:
-  disable-growth: "&cGrowth disabled for this plant."
-  enable-growth: "&aGrowth enabled for this plant."
+  disable-growth: "&cLocked &f%plant% &cprotections."
+  enable-growth: "&aUnlocked &f%plant% &aprotections."
+  lock-removed: "&eGrowth lock removed for &f%plant%&e."
+  explosion-locks-removed: "&eRemoved &f%count%&e growth lock(s) from explosion damage &7(&f%types%&7)."
+  locked-protection-break: "&cThis &f%plant%&c is locked and can't be broken. Unlock it with shears first."
+  locked-protection-trample: "&cThis &f%plant%&c is locked and can't be trampled. Unlock it with shears first."
+  locked-protection-harvest: "&cThis &f%plant%&c is locked and can't be harvested. Unlock it with shears first."
+  bonemeal-locked: "&cThis &f%plant%&c is locked and can't be grown with bonemeal. Unlock it with shears first."
+  break-bypass-enabled: "&eBreak protection bypass enabled for your session."
+  break-bypass-disabled: "&aBreak protection bypass disabled for your session."
