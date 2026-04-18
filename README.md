@@ -91,4 +91,4 @@ mvn clean package
 
 ## Output
 
-- Built jar: `target/StopPlantGrowth-1.0.0.jar`
+- Built jar: `target/StopPlantGrowth-x.x.x.jar`
