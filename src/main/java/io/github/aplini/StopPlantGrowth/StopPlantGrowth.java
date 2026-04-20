@@ -44,8 +44,8 @@ public final class StopPlantGrowth extends JavaPlugin implements Listener {
     private static final int MAX_CHUNK_RADIUS = 9;
     private static final int MIN_BLOCK_RADIUS = 1;
     private static final int MAX_BLOCK_RADIUS = 128;
-    private static final String DEFAULT_DISABLE_MESSAGE = "&cLocked &f%plant% &cprotections.";
-    private static final String DEFAULT_ENABLE_MESSAGE = "&aUnlocked &f%plant% &aprotections.";
+    private static final String DEFAULT_DISABLE_MESSAGE = "&cLocked &f%plant%";
+    private static final String DEFAULT_ENABLE_MESSAGE = "&aUnlocked &f%plant%";
     private static final String DEFAULT_LOCK_REMOVED_MESSAGE = "&eGrowth lock removed for &f%plant%&e";
     private static final String DEFAULT_EXPLOSION_LOCKS_REMOVED_MESSAGE = "&eRemoved &f%count%&e growth lock(s) from explosion damage &7(&f%types%&7)";
     private static final String DEFAULT_LOCKED_PROTECTION_BREAK_MESSAGE = "&cThis &f%plant%&c is locked and can't be broken. Unlock it with shears first.";
