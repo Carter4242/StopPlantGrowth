@@ -46,6 +46,10 @@ mushroom-growth-plants:
   - RED_MUSHROOM
   - BROWN_MUSHROOM
 
+melt-prevention-blocks:
+  - ICE
+  - SNOW
+
 # Shears durability cost for each lock/unlock action.
 # 0 = no durability consumed
 # 0.5 = 50% chance to consume 1 durability
@@ -56,8 +60,8 @@ shears-durability-cost: 0.0
 messages:
   disable-growth: "&cLocked &f%plant%."
   enable-growth: "&aUnlocked &f%plant%."
-  lock-removed: "&eGrowth lock removed for &f%plant%&e."
-  explosion-locks-removed: "&eRemoved &f%count%&e growth lock(s) from explosion damage &7(&f%types%&7)."
+  lock-removed: "&eLock removed for &f%plant%&e."
+  explosion-locks-removed: "&eRemoved &f%count%&e lock(s) from explosion damage &7(&f%types%&7)."
   locked-protection-break: "&cThis &f%plant%&c is locked and can't be broken. Unlock it with shears first."
   locked-protection-trample: "&cThis &f%plant%&c is locked and can't be trampled. Unlock it with shears first."
   locked-protection-harvest: "&cThis &f%plant%&c is locked and can't be harvested. Unlock it with shears first."

@@ -44,10 +44,13 @@ public final class StopPlantGrowth extends JavaPlugin implements Listener {
     private static final int MAX_CHUNK_RADIUS = 9;
     private static final int MIN_BLOCK_RADIUS = 1;
     private static final int MAX_BLOCK_RADIUS = 128;
+    private static final List<String> DEFAULT_MELT_PREVENTION_BLOCKS = List.of("ICE", "SNOW");
     private static final String DEFAULT_DISABLE_MESSAGE = "&cLocked &f%plant%";
     private static final String DEFAULT_ENABLE_MESSAGE = "&aUnlocked &f%plant%";
-    private static final String DEFAULT_LOCK_REMOVED_MESSAGE = "&eGrowth lock removed for &f%plant%&e";
-    private static final String DEFAULT_EXPLOSION_LOCKS_REMOVED_MESSAGE = "&eRemoved &f%count%&e growth lock(s) from explosion damage &7(&f%types%&7)";
+    private static final String LEGACY_DEFAULT_LOCK_REMOVED_MESSAGE = "&eGrowth lock removed for &f%plant%&e";
+    private static final String LEGACY_DEFAULT_EXPLOSION_LOCKS_REMOVED_MESSAGE = "&eRemoved &f%count%&e growth lock(s) from explosion damage &7(&f%types%&7)";
+    private static final String DEFAULT_LOCK_REMOVED_MESSAGE = "&eLock removed for &f%plant%&e";
+    private static final String DEFAULT_EXPLOSION_LOCKS_REMOVED_MESSAGE = "&eRemoved &f%count%&e lock(s) from explosion damage &7(&f%types%&7)";
     private static final String DEFAULT_LOCKED_PROTECTION_BREAK_MESSAGE = "&cThis &f%plant%&c is locked and can't be broken. Unlock it with shears first.";
     private static final String DEFAULT_LOCKED_PROTECTION_TRAMPLE_MESSAGE = "&cThis &f%plant%&c is locked and can't be trampled. Unlock it with shears first.";
     private static final String DEFAULT_LOCKED_PROTECTION_HARVEST_MESSAGE = "&cThis &f%plant%&c is locked and can't be harvested. Unlock it with shears first.";
@@ -59,6 +62,7 @@ public final class StopPlantGrowth extends JavaPlugin implements Listener {
     private Set<Material> ageGrowthPlants;
     private Set<Material> saplingGrowthPlants;
     private Set<Material> mushroomGrowthPlants;
+    private Set<Material> meltPreventionBlocks;
     private final Set<UUID> breakRestrictionBypassPlayers = new HashSet<>();
     private String disableMessage;
     private String enableMessage;
@@ -108,11 +112,12 @@ public final class StopPlantGrowth extends JavaPlugin implements Listener {
         boolean ageBasedPlant = isAgeBasedPlant(clickedBlock.getType());
         boolean saplingPlant = isSaplingPlant(clickedBlock.getType());
         boolean mushroomPlant = isMushroomPlant(clickedBlock.getType());
-        if (growthDirection == null && !ageBasedPlant && !saplingPlant && !mushroomPlant) {
+        boolean meltPreventionBlock = isMeltPreventionBlock(clickedBlock.getType());
+        if (growthDirection == null && !ageBasedPlant && !saplingPlant && !mushroomPlant && !meltPreventionBlock) {
             return;
         }
 
-        Block lockBlock = (ageBasedPlant || saplingPlant || mushroomPlant) ? clickedBlock : getAnchorBlock(clickedBlock, growthDirection);
+        Block lockBlock = (ageBasedPlant || saplingPlant || mushroomPlant || meltPreventionBlock) ? clickedBlock : getAnchorBlock(clickedBlock, growthDirection);
         boolean locked = hasLock(lockBlock);
         Player player = event.getPlayer();
 
@@ -212,6 +217,12 @@ public final class StopPlantGrowth extends JavaPlugin implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onBlockFade(BlockFadeEvent event) {
+        Block block = event.getBlock();
+        if (isMeltPreventionBlock(block.getType()) && hasLock(block)) {
+            event.setCancelled(true);
+            return;
+        }
+
         clearLock(event.getBlock());
     }
 
@@ -302,11 +313,13 @@ public final class StopPlantGrowth extends JavaPlugin implements Listener {
 
     private void reloadPlantMaterials() {
         reloadConfig();
+        applyMissingConfigDefaults();
         upwardGrowthPlants = parseMaterials(getConfig().getStringList("upward-growth-plants"), "upward-growth-plants");
         downwardGrowthPlants = parseMaterials(getConfig().getStringList("downward-growth-plants"), "downward-growth-plants");
         ageGrowthPlants = parseMaterials(getConfig().getStringList("age-growth-plants"), "age-growth-plants");
         saplingGrowthPlants = parseMaterials(getConfig().getStringList("sapling-growth-plants"), "sapling-growth-plants");
         mushroomGrowthPlants = parseMaterials(getConfig().getStringList("mushroom-growth-plants"), "mushroom-growth-plants");
+        meltPreventionBlocks = parseMaterials(getConfig().getStringList("melt-prevention-blocks"), "melt-prevention-blocks");
         disableMessage = getConfig().getString("messages.disable-growth", DEFAULT_DISABLE_MESSAGE);
         enableMessage = getConfig().getString("messages.enable-growth", DEFAULT_ENABLE_MESSAGE);
         lockRemovedMessage = getConfig().getString("messages.lock-removed", DEFAULT_LOCK_REMOVED_MESSAGE);
@@ -324,6 +337,29 @@ public final class StopPlantGrowth extends JavaPlugin implements Listener {
             configuredDurabilityCost = 0.0D;
         }
         shearsDurabilityCost = configuredDurabilityCost;
+    }
+
+    private void applyMissingConfigDefaults() {
+        boolean missingMeltPreventionBlocks = !getConfig().contains("melt-prevention-blocks", true);
+        boolean updatedLegacyMessages = updateLegacyMessageDefaults();
+        getConfig().addDefault("melt-prevention-blocks", DEFAULT_MELT_PREVENTION_BLOCKS);
+        if (missingMeltPreventionBlocks || updatedLegacyMessages) {
+            getConfig().options().copyDefaults(true);
+            saveConfig();
+        }
+    }
+
+    private boolean updateLegacyMessageDefaults() {
+        boolean updated = false;
+        if (LEGACY_DEFAULT_LOCK_REMOVED_MESSAGE.equals(getConfig().getString("messages.lock-removed"))) {
+            getConfig().set("messages.lock-removed", DEFAULT_LOCK_REMOVED_MESSAGE);
+            updated = true;
+        }
+        if (LEGACY_DEFAULT_EXPLOSION_LOCKS_REMOVED_MESSAGE.equals(getConfig().getString("messages.explosion-locks-removed"))) {
+            getConfig().set("messages.explosion-locks-removed", DEFAULT_EXPLOSION_LOCKS_REMOVED_MESSAGE);
+            updated = true;
+        }
+        return updated;
     }
 
     private Set<Material> parseMaterials(List<String> values, String configKey) {
@@ -532,7 +568,7 @@ public final class StopPlantGrowth extends JavaPlugin implements Listener {
                     "\n"+
                             colorize(PREFIX + "&fCommands:\n")+
                             colorize("  &7- &a/spg reload &8- &fReload config\n")+
-                            colorize("  &7- &a/spg chunk  &8- &fList locked plants in your chunk\n")+
+                            colorize("  &7- &a/spg chunk  &8- &fList locked blocks in your chunk\n")+
                             colorize("  &7- &a/spg stats [radius] &8- &fShow lock stats (radius 1-9)\n")+
                             colorize("  &7- &a/spg clear chunks [radius] [type] &8- &fClear by chunk radius (1-9)\n")+
                             colorize("  &7- &a/spg clear blocks [radius] [type] &8- &fClear by block radius (1-128)\n")+
@@ -565,11 +601,11 @@ public final class StopPlantGrowth extends JavaPlugin implements Listener {
 
             List<LockedPlantEntry> lockedPlants = getLockedPlantsInChunk(player.getLocation().getChunk());
             if(lockedPlants.isEmpty()){
-                sender.sendMessage(colorize(PREFIX + "&eNo locked plants found in this chunk."));
+                sender.sendMessage(colorize(PREFIX + "&eNo locked blocks found in this chunk."));
                 return true;
             }
 
-            sender.sendMessage(colorize(PREFIX + "&aLocked plants in this chunk:"));
+            sender.sendMessage(colorize(PREFIX + "&aLocked blocks in this chunk:"));
             for(LockedPlantEntry lockedPlant : lockedPlants){
                 player.sendMessage(createLockedPlantMessage(lockedPlant));
             }
@@ -595,7 +631,7 @@ public final class StopPlantGrowth extends JavaPlugin implements Listener {
 
             List<LockedPlantEntry> lockedPlants = getLockedPlantsInRadius(player.getLocation().getChunk(), radius);
             if (lockedPlants.isEmpty()) {
-                sender.sendMessage(colorize(PREFIX + "&eNo locked plants found in chunk radius &f" + radius + "&e."));
+                sender.sendMessage(colorize(PREFIX + "&eNo locked blocks found in chunk radius &f" + radius + "&e."));
                 return true;
             }
 
@@ -604,7 +640,7 @@ public final class StopPlantGrowth extends JavaPlugin implements Listener {
                 byMaterial.merge(entry.material(), 1, Integer::sum);
             }
 
-            sender.sendMessage(colorize(PREFIX + "&aLocked plants in chunk radius &f" + radius + "&a: &f" + lockedPlants.size()));
+            sender.sendMessage(colorize(PREFIX + "&aLocked blocks in chunk radius &f" + radius + "&a: &f" + lockedPlants.size()));
             byMaterial.entrySet().stream()
                     .sorted((left, right) -> Integer.compare(right.getValue(), left.getValue()))
                     .forEach(entry -> sender.sendMessage(colorize("&7  - &f" + entry.getKey() + "&7: &a" + entry.getValue())));
@@ -943,6 +979,7 @@ public final class StopPlantGrowth extends JavaPlugin implements Listener {
         tracked.addAll(ageGrowthPlants);
         tracked.addAll(saplingGrowthPlants);
         tracked.addAll(mushroomGrowthPlants);
+        tracked.addAll(meltPreventionBlocks);
         return tracked;
     }
 
@@ -956,6 +993,10 @@ public final class StopPlantGrowth extends JavaPlugin implements Listener {
 
     private boolean isMushroomPlant(Material material) {
         return mushroomGrowthPlants.contains(material);
+    }
+
+    private boolean isMeltPreventionBlock(Material material) {
+        return meltPreventionBlocks.contains(material);
     }
 
     private boolean isStemFruitGrowth(BlockGrowEvent event) {
@@ -1016,7 +1057,8 @@ public final class StopPlantGrowth extends JavaPlugin implements Listener {
         return getGrowthDirection(material) != null
                 || isAgeBasedPlant(material)
                 || isSaplingPlant(material)
-                || isMushroomPlant(material);
+                || isMushroomPlant(material)
+                || isMeltPreventionBlock(material);
     }
 
     private boolean isRightClickHarvestable(Material material) {

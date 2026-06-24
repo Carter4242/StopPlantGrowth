@@ -9,6 +9,7 @@ StopPlantGrowth lets players toggle growth locks on supported plants by right-cl
 - Shear sound plays on every successful lock/unlock.
 - Supports vertical plants, age-based crops/plants, saplings, and mushrooms.
 - Blocks growth/spread/tree generation while locked (by plant group behavior).
+- Supports configurable melt locks, defaulting to `ICE` and `SNOW`.
 - Supports bonemeal lock feedback messages.
 - Supports lock inspection and cleanup with chunk radius or block radius modes.
 - Configurable material groups and messages in `config.yml`.
@@ -26,6 +27,10 @@ StopPlantGrowth lets players toggle growth locks on supported plants by right-cl
   - Blocks sapling growth and tree structure growth while locked.
 - Mushrooms (`mushroom-growth-plants`):
   - Blocks mushroom spread and huge mushroom structure growth while locked.
+- Melt prevention blocks:
+  - Blocks in `melt-prevention-blocks` can be locked with shears.
+  - Locked melt prevention blocks do not melt/fade.
+  - Defaults to `ICE` and `SNOW`.
 
 ## Protection Rules
 
@@ -65,6 +70,7 @@ StopPlantGrowth lets players toggle growth locks on supported plants by right-cl
 - `age-growth-plants`
 - `sapling-growth-plants`
 - `mushroom-growth-plants`
+- `melt-prevention-blocks`
 - `shears-durability-cost`
 
 ## Shears Durability Cost
@@ -80,7 +86,7 @@ StopPlantGrowth lets players toggle growth locks on supported plants by right-cl
 
 ## Message Placeholders
 
-- `%plant%` or `{plant}` for plant display name
+- `%plant%` or `{plant}` for locked block display name
 - `%count%` / `{count}` and `%types%` / `{types}` where applicable
 
 ## Build
